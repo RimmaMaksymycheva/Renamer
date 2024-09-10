@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34728.176
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RenamerUndMitte", "RenamerUndMitte\RenamerUndMitte.csproj", "{265DC043-8F50-4489-8A15-AD7862027060}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{265DC043-8F50-4489-8A15-AD7862027060}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{265DC043-8F50-4489-8A15-AD7862027060}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{265DC043-8F50-4489-8A15-AD7862027060}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{265DC043-8F50-4489-8A15-AD7862027060}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {03F2D6C3-4AC7-449C-8103-5CDBA1DA66D8}
+	EndGlobalSection
+EndGlobal
