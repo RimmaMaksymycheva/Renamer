@@ -1,25 +1,229 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.8.34728.176
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GewuenschteOptinUndMehrZahlenänderungen", "GewuenschteOptinUndMehrZahlenänderungen\GewuenschteOptinUndMehrZahlenänderungen.csproj", "{87CDF92A-7E58-4F58-B853-84CCABA0E6D0}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{87CDF92A-7E58-4F58-B853-84CCABA0E6D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{87CDF92A-7E58-4F58-B853-84CCABA0E6D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{87CDF92A-7E58-4F58-B853-84CCABA0E6D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{87CDF92A-7E58-4F58-B853-84CCABA0E6D0}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {4C4CBFBD-1844-4B43-89A8-924FB2CA2C8B}
-	EndGlobalSection
-EndGlobal
+using System;
+using System.IO;
+using System.Text.RegularExpressions;
+
+class Program
+{
+    static void Main()
+    {
+        // Benutzer nach Eingaben fragen
+        string directoryPath = GetInput("Geben Sie das Verzeichnis ein: ");
+        int changeOption = GetChangeOption();
+
+        // Überprüfen, ob das Verzeichnis existiert
+        if (!Directory.Exists(directoryPath))
+        {
+            Console.WriteLine("Das angegebene Verzeichnis existiert nicht.");
+            return;
+        }
+
+        try
+        {
+            // Dateien im Verzeichnis durchsuchen und umbenennen basierend auf der Benutzerwahl
+            ProcessFiles(directoryPath, changeOption);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ein Fehler ist aufgetreten: {ex.Message}");
+        }
+    }
+
+    static string GetInput(string prompt)
+    {
+        string input;
+        do
+        {
+            Console.Write(prompt);
+            input = Console.ReadLine()?.Trim();
+            if (string.IsNullOrEmpty(input))
+            {
+                Console.WriteLine("Eingabe darf nicht leer sein. Bitte versuchen Sie es erneut.");
+            }
+        } while (string.IsNullOrEmpty(input));
+
+        return input;
+    }
+
+    static int GetChangeOption()
+    {
+        int option;
+        do
+        {
+            Console.WriteLine("Wählen Sie, was Sie ändern möchten:");
+            Console.WriteLine("1: Anfang");
+            Console.WriteLine("2: Mitte");
+            Console.WriteLine("3: Ende");
+            Console.WriteLine("4: Zahlenposition");
+            Console.Write("Ihre Wahl: ");
+
+            string input = Console.ReadLine()?.Trim();
+            if (int.TryParse(input, out option) && option >= 1 && option <= 4)
+            {
+                return option;
+            }
+
+            Console.WriteLine("Ungültige Eingabe. Bitte wählen Sie eine gültige Option.");
+        } while (true);
+    }
+
+    static void ProcessFiles(string directoryPath, int changeOption)
+    {
+        string[] files = Directory.GetFiles(directoryPath);
+
+        foreach (string filePath in files)
+        {
+            string fileName = Path.GetFileName(filePath);
+            string newFileName = fileName;
+
+            switch (changeOption)
+            {
+                case 1:
+                    newFileName = ChangeStart(fileName);
+                    break;
+                case 2:
+                    newFileName = ChangeMiddle(fileName);
+                    break;
+                case 3:
+                    newFileName = ChangeEnd(fileName);
+                    break;
+                case 4:
+                    newFileName = ChangeNumberPosition(fileName);
+                    break;
+            }
+
+            string newFilePath = Path.Combine(directoryPath, newFileName);
+            File.Move(filePath, newFilePath);
+            Console.WriteLine($"Datei umbenannt: {fileName} -> {newFileName}");
+        }
+
+        Console.WriteLine("Dateien wurden erfolgreich umbenannt.");
+    }
+
+    static string ChangeStart(string fileName)
+    {
+        string startPattern = GetInput("Geben Sie das Anfangsmuster ein: ");
+        string newPrefix = GetInput("Geben Sie das neue Präfix ein: ");
+        if (!fileName.StartsWith(startPattern))
+        {
+            return fileName;
+        }
+
+        string middlePart = fileName.Substring(startPattern.Length);
+        string newFileName = newPrefix + middlePart;
+        return newFileName;
+    }
+
+    static string ChangeMiddle(string fileName)
+    {
+        string startPattern = GetInput("Geben Sie das Anfangsmuster ein (optional, drücke Enter wenn nicht benötigt): ");
+        string endPattern = GetInput("Geben Sie das Endmuster ein (optional, drücke Enter wenn nicht benötigt): ");
+        string middlePattern = GetInput("Geben Sie das Mittelmuster ein (optional, drücke Enter wenn nicht benötigt): ");
+        string newMiddlePattern = GetInput("Geben Sie das neue Mittelmuster ein (optional): ");
+
+        bool matchStart = MatchPattern(fileName, startPattern, true);
+        bool matchEnd = MatchPattern(fileName, endPattern, false);
+
+        if (matchStart && matchEnd)
+        {
+            string middlePart = ExtractMiddlePart(fileName, startPattern, endPattern);
+
+            if (!string.IsNullOrEmpty(middlePattern) && middlePart.Contains(middlePattern))
+            {
+                middlePart = middlePart.Replace(middlePattern, newMiddlePattern);
+            }
+
+            string newFileName = fileName.Replace(ExtractMiddlePart(fileName, startPattern, endPattern), middlePart);
+            return newFileName;
+        }
+
+        return fileName;
+    }
+
+    static string ChangeEnd(string fileName)
+    {
+        string endPattern = GetInput("Geben Sie das Endmuster ein (optional, drücke Enter wenn nicht benötigt): ");
+        string newSuffix = GetInput("Geben Sie das neue Suffix ein: ");
+
+        if (!fileName.EndsWith(endPattern))
+        {
+            return fileName;
+        }
+
+        string middlePart = fileName.Substring(0, fileName.Length - endPattern.Length);
+        string newFileName = middlePart + newSuffix;
+        return newFileName;
+    }
+
+    static string ChangeNumberPosition(string fileName)
+    {
+        string startPattern = GetInput("Geben Sie das Anfangsmuster ein (optional, drücke Enter wenn nicht benötigt): ");
+        string endPattern = GetInput("Geben Sie das Endmuster ein (optional, drücke Enter wenn nicht benötigt): ");
+        int numberPosition = GetNumberPosition();
+
+        if (!fileName.StartsWith(startPattern) || !fileName.EndsWith(endPattern))
+        {
+            return fileName;
+        }
+
+        string middlePart = ExtractMiddlePart(fileName, startPattern, endPattern);
+        string newMiddlePart = AdjustNumberPosition(middlePart, numberPosition);
+
+        string newFileName = startPattern + newMiddlePart + endPattern;
+        return newFileName;
+    }
+
+    static bool MatchPattern(string fileName, string pattern, bool isStart)
+    {
+        if (string.IsNullOrEmpty(pattern))
+        {
+            return true;
+        }
+
+        return isStart ? fileName.StartsWith(pattern) : fileName.EndsWith(pattern);
+    }
+
+    static string ExtractMiddlePart(string fileName, string startPattern, string endPattern)
+    {
+        int startLength = !string.IsNullOrEmpty(startPattern) ? startPattern.Length : 0;
+        int endLength = !string.IsNullOrEmpty(endPattern) ? endPattern.Length : 0;
+        return fileName.Substring(startLength, fileName.Length - startLength - endLength);
+    }
+
+    static string AdjustNumberPosition(string middlePart, int numberPosition)
+    {
+        string numberPart = Regex.Match(middlePart, @"\d+").Value;
+        if (!string.IsNullOrEmpty(numberPart))
+        {
+            middlePart = Regex.Replace(middlePart, @"\d+", "");
+
+            if (numberPosition == 1)
+            {
+                middlePart = numberPart + middlePart;
+            }
+            else if (numberPosition == 2)
+            {
+                middlePart = middlePart + numberPart;
+            }
+            // Wenn numberPosition == 0, bleibt die Zahl an ihrem Platz
+        }
+
+        return middlePart;
+    }
+
+    static int GetNumberPosition()
+    {
+        int numberPosition;
+        do
+        {
+            Console.Write("Soll die Zahl an den Anfang (1), das Ende (2) oder an ihrem Platz bleiben (0) verschoben werden? ");
+            string input = Console.ReadLine()?.Trim();
+
+            if (int.TryParse(input, out numberPosition) && (numberPosition == 0 || numberPosition == 1 || numberPosition == 2))
+            {
+                return numberPosition;
+            }
+
+            Console.WriteLine("Ungültige Eingabe. Bitte geben Sie 0, 1 oder 2 ein.");
+        } while (true);
+    }
+}
